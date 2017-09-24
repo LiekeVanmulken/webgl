@@ -1,0 +1,150 @@
+<html>
+<head>
+
+</head>
+<body onload="Main()">
+
+	<canvas id="c" width="800px" height="800px"></canvas>
+	<p>Here the canvas ends</p>
+
+	<script id="2d-vertex-shader" type="notjs">
+		attribute vec2 position;
+		attribute vec3 vertColor;
+		
+		varying vec3 fragColor;
+
+		void main(){
+			fragColor = vertColor;
+			gl_Position = vec4(position,0.0,1.0);
+		}
+	</script>
+
+	<script id="2d-fragment-shader" type="notjs">
+		precision mediump float;
+
+		varying vec3 fragColor;
+
+		void main(){
+			gl_FragColor = vec4(fragColor,1);
+		}
+	</script>
+
+	<script type="text/javascript">
+
+		function Main(){
+			var canvas = document.getElementById('c');
+			var gl = canvas.getContext('webgl');
+			if(!gl){
+				console.log('Used the experimental-webgl');
+				gl = canvas.getContext('experimental-webgl');
+			}
+			if(!gl){
+				alert('Cannot use webgl');
+			}
+
+			var vertexShaderSource = document.getElementById('2d-vertex-shader').text;
+			var fragmentShaderSource = document.getElementById('2d-fragment-shader').text;
+
+
+			gl.clearColor(0.75, 0.85, 0.8, 1.0);
+			gl.clear(gl.COLOR_BUFFER_BIT);
+
+			var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+			var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+
+			gl.shaderSource(vertexShader,vertexShaderSource);
+			gl.shaderSource(fragmentShader, fragmentShaderSource);
+
+			gl.compileShader(vertexShader);
+
+			if(!gl.getShaderParameter(vertexShader,gl.COMPILE_STATUS)){
+				console.error('Vertex shader not compiling', gl.getShaderInfoLog(vertexShader));
+			}
+
+			gl.compileShader(fragmentShader);
+			if(!gl.getShaderParameter(fragmentShader,gl.COMPILE_STATUS)){
+				console.error('Fragment shader not compiling', gl.getShaderInfoLog(fragmentShader));
+			}
+
+
+			var program = gl.createProgram();
+			gl.attachShader(program,vertexShader);
+			gl.attachShader(program,fragmentShader);
+			gl.linkProgram(program);
+			if(!gl.getProgramParameter(program,gl.LINK_STATUS)){
+				console.error('ERROR linking', gl.GetProgramInfoLog(program));
+				return;
+			}
+			// catches aditional issues -> only use in developer
+			gl.validateProgram(program);
+			if(!gl.getProgramParameter(program,gl.VALIDATE_STATUS)){
+				console.error('ERROR validating', gl.GetProgramInfoLog(program));
+				return;
+			}
+
+			//
+			// create buffer
+			//
+
+			// var triangleVertices =  
+			// [
+			// 0,.5,
+			// -.5,-.5,
+			// .5,-.5,
+			// ];
+
+			var triangleVertices =  
+			[
+			0,.5,		1,0,0,
+			-.5,-.5,	0,1,0,
+			.5,-.5,		0,0,1,
+			];
+
+			var triangleVertexBufferObject = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER,triangleVertexBufferObject);
+			gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(triangleVertices),gl.STATIC_DRAW);
+
+			
+
+			var positionAttribLocation = gl.getAttribLocation(program,'position');
+			gl.vertexAttribPointer(
+				positionAttribLocation, // Attribute location
+				2, // number of elements per attributer -> 2 since vec2
+				gl.FLOAT, // type of element
+				gl.FALSE, // is de data normalised ?(check later what this means)
+				5 * Float32Array.BYTES_PER_ELEMENT,// size of an individual verterx
+				0 // offset
+				);
+			
+			var vertColorAttribLocation = gl.getAttribLocation(program,'vertColor');
+			gl.vertexAttribPointer(
+				vertColorAttribLocation,
+				3, 
+				gl.FLOAT,
+				gl.FALSE,
+				5 * Float32Array.BYTES_PER_ELEMENT,
+				2 * Float32Array.BYTES_PER_ELEMENT 
+				);
+
+
+
+
+			gl.enableVertexAttribArray(positionAttribLocation);
+			gl.enableVertexAttribArray(vertColorAttribLocation);
+
+			//
+			// Main render loop
+			//
+
+			gl.useProgram(program);
+			gl.drawArrays(
+				gl.TRIANGLES,
+				0, // How many you want to skip
+				3 // vertexes to draw
+				);
+		}
+
+	</script>
+
+</body>
+</html>

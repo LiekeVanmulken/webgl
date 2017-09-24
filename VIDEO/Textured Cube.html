@@ -1,0 +1,306 @@
+<html>
+<head>
+	<title>Rotating Cube</title>
+</head>
+<body onload="Main()">
+	<script src="./gl-matrix.js" type="text/javascript"></script>
+	<canvas id="c" width="800px" height="800px"></canvas>
+	<p>Here the canvas ends.</p>
+	<img id="crate-texture" src="crate.png" style="display:none">
+
+
+
+
+	<script id="2d-vertex-shader" type="notjs">
+		attribute vec3 position;
+		attribute vec2 vertTexCoord;
+		
+		uniform mat4 mWorld;
+		uniform mat4 mView;
+		uniform mat4 mProj;
+
+
+		varying vec2 fragTexCoord;
+
+		void main(){
+			fragTexCoord = vertTexCoord;
+			gl_Position = mProj * mView * mWorld *vec4(position,1.0);
+		}
+	</script>
+
+	<script id="2d-fragment-shader" type="notjs">
+		precision mediump float;
+
+		varying vec2 fragTexCoord;
+		uniform sampler2D sampler;
+		
+		void main(){
+			gl_FragColor = texture2D(sampler, fragTexCoord);
+		}
+	</script>
+
+
+
+
+
+
+	<script type="text/javascript">
+
+		function Main(){
+			var canvas = document.getElementById('c');
+			var gl = canvas.getContext('webgl');
+			if(!gl){
+				console.log('Used the experimental-webgl');
+				gl = canvas.getContext('experimental-webgl');
+			}
+			if(!gl){
+				alert('Cannot use webgl');
+			}
+
+			gl.enable(gl.DEPTH_TEST); // adds a depth test
+
+			gl.enable(gl.CULL_FACE); // adds  back culling
+			// gl.cullFace(gl.FRONT); //sets which face you want to cull
+			gl.frontFace(gl.CCW); // sets the backface to be when the points are counter clockwise
+			gl.cullFace(gl.BACK);
+
+			var vertexShaderSource = document.getElementById('2d-vertex-shader').text;
+			var fragmentShaderSource = document.getElementById('2d-fragment-shader').text;
+
+
+			gl.clearColor(0.75, 0.85, 0.8, 1.0);
+			gl.clear(gl.COLOR_BUFFER_BIT);
+
+			var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+			var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+
+			gl.shaderSource(vertexShader,vertexShaderSource);
+			gl.shaderSource(fragmentShader, fragmentShaderSource);
+
+			gl.compileShader(vertexShader);
+
+			if(!gl.getShaderParameter(vertexShader,gl.COMPILE_STATUS)){
+				console.error('Vertex shader not compiling', gl.getShaderInfoLog(vertexShader));
+			}
+
+			gl.compileShader(fragmentShader);
+			if(!gl.getShaderParameter(fragmentShader,gl.COMPILE_STATUS)){
+				console.error('Fragment shader not compiling', gl.getShaderInfoLog(fragmentShader));
+			}
+
+
+			var program = gl.createProgram();
+			gl.attachShader(program,vertexShader);
+			gl.attachShader(program,fragmentShader);
+			gl.linkProgram(program);
+			if(!gl.getProgramParameter(program,gl.LINK_STATUS)){
+				console.error('ERROR linking', gl.GetProgramInfoLog(program));
+				return;
+			}
+			// catches aditional issues -> only use in developer
+			gl.validateProgram(program);
+			if(!gl.getProgramParameter(program,gl.VALIDATE_STATUS)){
+				console.error('ERROR validating', gl.GetProgramInfoLog(program));
+				return;
+			}
+
+			//
+			// create buffer
+			//
+
+			var boxVertices = 
+			[ // X, Y, Z           U, V
+				// Top
+				-1.0, 1.0, -1.0,   0, 0,
+				-1.0, 1.0, 1.0,    0, 1,
+				1.0, 1.0, 1.0,     1, 1,
+				1.0, 1.0, -1.0,    1, 0,
+
+				// Left
+				-1.0, 1.0, 1.0,    0, 0,
+				-1.0, -1.0, 1.0,   1, 0,
+				-1.0, -1.0, -1.0,  1, 1,
+				-1.0, 1.0, -1.0,   0, 1,
+
+				// Right
+				1.0, 1.0, 1.0,    1, 1,
+				1.0, -1.0, 1.0,   0, 1,
+				1.0, -1.0, -1.0,  0, 0,
+				1.0, 1.0, -1.0,   1, 0,
+
+				// Front
+				1.0, 1.0, 1.0,    1, 1,
+				1.0, -1.0, 1.0,    1, 0,
+				-1.0, -1.0, 1.0,    0, 0,
+				-1.0, 1.0, 1.0,    0, 1,
+
+				// Back
+				1.0, 1.0, -1.0,    0, 0,
+				1.0, -1.0, -1.0,    0, 1,
+				-1.0, -1.0, -1.0,    1, 1,
+				-1.0, 1.0, -1.0,    1, 0,
+
+				// Bottom
+				-1.0, -1.0, -1.0,   1, 1,
+				-1.0, -1.0, 1.0,    1, 0,
+				1.0, -1.0, 1.0,     0, 0,
+				1.0, -1.0, -1.0,    0, 1,
+			];
+
+			var boxIndices =
+				[
+				// Top
+				0, 1, 2,
+				0, 2, 3,
+
+				// Left
+				5, 4, 6,
+				6, 4, 7,
+
+				// Right
+				8, 9, 10,
+				8, 10, 11,
+
+				// Front
+				13, 12, 14,
+				15, 14, 12,
+
+				// Back
+				16, 17, 18,
+				16, 18, 19,
+
+				// Bottom
+				21, 20, 22,
+				22, 20, 23
+			];
+
+			var BoxVertexBufferObject = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER,BoxVertexBufferObject);
+			gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(boxVertices),gl.STATIC_DRAW);
+
+
+			var BoxIndicesBufferObject = gl.createBuffer();
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,BoxIndicesBufferObject);
+			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(boxIndices),gl.STATIC_DRAW);
+
+
+
+			var positionAttribLocation = gl.getAttribLocation(program,'position');
+			gl.vertexAttribPointer(
+				positionAttribLocation, // Attribute location
+				3, // number of elements per attributer -> 2 since vec2
+				gl.FLOAT, // type of element
+				gl.FALSE, // is de data normalised ?(check later what this means)
+				5 * Float32Array.BYTES_PER_ELEMENT,// size of an individual verterx
+				0 // offset
+				);
+
+			var texCoordAttribLocation = gl.getAttribLocation(program,'vertTexCoord');
+			gl.vertexAttribPointer(
+				texCoordAttribLocation,
+				2, 
+				gl.FLOAT,
+				gl.FALSE,
+				5 * Float32Array.BYTES_PER_ELEMENT,
+				3 * Float32Array.BYTES_PER_ELEMENT 
+				);
+
+
+			gl.enableVertexAttribArray(positionAttribLocation);
+			gl.enableVertexAttribArray(texCoordAttribLocation);
+
+			//
+			// Create texture
+			//
+			var boxTexture = gl.createTexture();
+			
+			gl.bindTexture(gl.TEXTURE_2D, boxTexture);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+			
+
+			gl.texImage2D(
+				gl.TEXTURE_2D, 
+				0, // detail
+				gl.RGBA, // type
+				gl.RGBA, // type
+				gl.UNSIGNED_BYTE,
+				document.getElementById('crate-texture')
+				);
+
+
+			gl.bindTexture(gl.TEXTURE_2D, null);
+
+
+			gl.useProgram(program);
+
+			var matWorldUniformLocation = gl.getUniformLocation(program, 'mWorld');
+			var matViewUniformLocation = gl.getUniformLocation(program, 'mView');
+			var matProjUniformLocation = gl.getUniformLocation(program, 'mProj');
+
+			var worldMatrix = new Float32Array(16);
+			var viewMatrix = new Float32Array(16);
+			var projMatrix = new Float32Array(16);
+
+			mat4.identity(worldMatrix);
+			mat4.lookAt(viewMatrix,[0,0,-4],[0,0,0],[0,1,0]);
+			mat4.perspective(
+				projMatrix, 
+					glMatrix.toRadian(45), // fov
+					 1, // aspect ratio
+					 .1, // min viewing frustum
+					 1000 // max viewing frustum
+					 );
+
+			gl.uniformMatrix4fv(matWorldUniformLocation,gl.FALSE, worldMatrix);
+			gl.uniformMatrix4fv(matViewUniformLocation,gl.FALSE, viewMatrix);
+			gl.uniformMatrix4fv(matProjUniformLocation,gl.FALSE, projMatrix);
+
+			//
+			// Main render loop using rotation on two axes
+			//
+
+			var xRotationMatrix = new Float32Array(16);
+			var yRotationMatrix = new Float32Array(16);
+
+			var identityMatrix = new Float32Array(16);
+			mat4.identity(identityMatrix);
+			var angle = 0
+			var loop = function (){
+				
+				angle = performance.now() / 1000 / 6 * 2 * Math.PI;
+				
+				mat4.rotate(xRotationMatrix,identityMatrix,angle,[0,1,0]);
+				mat4.rotate(yRotationMatrix,identityMatrix,angle/4,[1,0,0]);
+				mat4.mul(worldMatrix,xRotationMatrix,yRotationMatrix);
+
+				
+				gl.uniformMatrix4fv(matWorldUniformLocation,gl.FALSE, worldMatrix);
+
+				gl.clearColor(.75,.85,.8,1);
+				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+				gl.bindTexture(gl.TEXTURE_2D, boxTexture);
+				gl.activeTexture(gl.TEXTURE0);
+
+
+				//gl.drawArrays(gl.TRIANGLES,0,3);	
+				gl.drawElements(gl.TRIANGLES, boxIndices.length, gl.UNSIGNED_SHORT,0);
+				requestAnimationFrame(loop);
+			}
+			requestAnimationFrame(loop);
+
+
+
+
+
+
+				
+		}
+
+	</script>
+
+</body>
+</html>

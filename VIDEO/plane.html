@@ -35,6 +35,7 @@
 	</script>
 
 	<script type="text/javascript">
+			var plane = [];
 
 		function Main(){
 			var canvas = document.getElementById('c');
@@ -116,18 +117,71 @@
 			//   0,.5,.5,		0,0,1,
 			// ];
 
-			var boxVertices =
-			[
-			  0, .2,.5,		1,0,0,
-			  0, .1, 0,		0,1,0,
-			 .5, .2, 0,		0,0,1,
-			 .5, .2,.5,		0,0,1,
-			];
+			var width = 10;
+			var height = 10;
+			// var plane = [];
 
-			var boxIndices = 
+			var boxVertices = [];
+			var counter = 0;
+			for(var i =0;i<width;i++){
+				plane.push([]);
+				for(var j = 0;j<height;j++){
+					var obj = {x:i,y:0,z:j, R:1,G:0,B:0};
+					plane[i].push(obj);
+				}
+			}
+			function addToArray(vertex){
+				boxVertices.push(vertex.x);
+				boxVertices.push(vertex.y);
+				boxVertices.push(vertex.z);
+
+				boxVertices.push(vertex.R); // R
+				boxVertices.push(vertex.G); // G
+				boxVertices.push(vertex.B); // B
+				
+			}
+
+			for(var i =0;i<width-1;i++){
+				for(var j = 0 ; j<height-1;j++){
+					var vertex1 = plane[i][j];
+					var vertex2 = plane[i+1][j];
+					var vertex3 = plane[i+1][j+1];
+					var vertex4 = plane[i][j+1];
+					
+					addToArray(vertex1);
+					addToArray(vertex2);
+					addToArray(vertex3);
+					addToArray(vertex4);
+				}
+			}
+			console.log(boxVertices);
+
+			// var boxVertices =
+			// [
+			//   0, .2,.5,		1,0,0,
+			//   0, .1, 0,		0,1,0,
+			//  .5, .2, 0,		0,0,1,
+			//  .5, .2,.5,		0,0,1,
+			// ];
+			
+			var standardIndices = 
 			[
-				0,1,2,2,3,0
-			]
+				0,1,2,2,3,0,
+			];
+			// var boxIndices = 
+			// [
+			// 	0,1,2,2,3,0,
+			// 	4,5,6,6,7,4,
+			// ];
+			boxIndices = [];
+			var count = (width-1) * (height-1);
+			for(var i =0;i<count;i++){
+				
+				for(var k=0; k <  standardIndices.length; k++){
+					boxIndices.push((i*4)+standardIndices[k]);
+				}
+			}
+			console.log(boxIndices);
 
 			var boxVertexBufferObject = gl.createBuffer();
 			gl.bindBuffer(gl.ARRAY_BUFFER,boxVertexBufferObject);

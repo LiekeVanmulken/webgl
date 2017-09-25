@@ -156,23 +156,11 @@
 			}
 			console.log(boxVertices);
 
-			// var boxVertices =
-			// [
-			//   0, .2,.5,		1,0,0,
-			//   0, .1, 0,		0,1,0,
-			//  .5, .2, 0,		0,0,1,
-			//  .5, .2,.5,		0,0,1,
-			// ];
 			
 			var standardIndices = 
 			[
 				0,1,2,2,3,0,
 			];
-			// var boxIndices = 
-			// [
-			// 	0,1,2,2,3,0,
-			// 	4,5,6,6,7,4,
-			// ];
 			boxIndices = [];
 			var count = (width-1) * (height-1);
 			for(var i =0;i<count;i++){
@@ -244,16 +232,20 @@
 			//
 			// Main render loop
 			//
+			var translation = [0,0,0];
+
+
 			var identityMatrix = new Float32Array(16);
 			mat4.identity(identityMatrix);
 			var angle = 0.1
 
 			mat4.rotate(worldMatrix,identityMatrix,angle,[0,1,0]);
 
+
 			var loop = function (){
 				
 				angle = performance.now() / 1000 / 6 * 2 * Math.PI;
-				// mat4.rotate(worldMatrix,identityMatrix,angle,[0,1,0]);
+				
 				gl.uniformMatrix4fv(matWorldUniformLocation,gl.FALSE, worldMatrix);
 
 				gl.clearColor(.75,.85,.8,1);
@@ -265,7 +257,34 @@
 				requestAnimationFrame(loop);
 			}
 			requestAnimationFrame(loop);
-			
+			document.body.onkeydown = function(e){
+				
+				console.log(e.keyCode);
+
+				
+				if(e.keyCode == 38){// up
+					translation[1]-=1;
+				}
+				if(e.keyCode == 40){// down
+					translation[1]+=1;
+				}
+				if(e.keyCode == 37){// left
+					translation[0]-=1;
+				}
+				if(e.keyCode == 39){// right
+					translation[0]+=1;
+				}
+
+				if(e.keyCode == 87){// W
+					translation[2]+=1;
+				}z
+				if(e.keyCode == 83){// S
+					translation[2]-=1;
+				}
+
+				mat4.translate(worldMatrix,identityMatrix,translation);
+			};
+
 		}
 
 	</script>

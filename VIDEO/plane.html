@@ -118,7 +118,7 @@
 			// ];
 
 			var width = 10;
-			var height = 10;
+			var height = 2;
 			// var plane = [];
 
 			var boxVertices = [];
@@ -276,10 +276,10 @@
 				}
 
 				if(e.keyCode == 87){// W
-					translation[2]+=1;
-				}z
-				if(e.keyCode == 83){// S
 					translation[2]-=1;
+				}
+				if(e.keyCode == 83){// S
+					translation[2]+=1;
 				}
 
 				mat4.translate(worldMatrix,identityMatrix,translation);

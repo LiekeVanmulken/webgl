@@ -92,33 +92,8 @@
 			// create buffer
 			//
 
-
-			// var boxVertices =  
-			// [
-			//   0, .5, 0,		1,0,0,
-			//   0,  0, 0,		0,1,0,
-			//  .5,0, 0,		0,0,1,
-			// ];
-
-			// boxVertices =  
-			// [
-			//   0, .5, 0,		1,0,0,
-			//   0,  0, 0,		0,1,0,
-			//  .5,0, 0,		0,0,1,
-			//  .5,.5, 0,		0,0,1,
-			// ];
-
-
-			// boxVertices =
-			// [
-			//   0, 0,.5,		1,0,0,
-			//   0, 0, 0,		0,1,0,
-			//   0,.5, 0,		0,0,1,
-			//   0,.5,.5,		0,0,1,
-			// ];
-
 			var width = 10;
-			var height = 2;
+			var height = 8;
 			// var plane = [];
 
 			var boxVertices = [];
@@ -126,7 +101,8 @@
 			for(var i =0;i<width;i++){
 				plane.push([]);
 				for(var j = 0;j<height;j++){
-					var obj = {x:i,y:0,z:j, R:1,G:0,B:0};
+					var r = (i*j)/(width * height) +.1;
+					var obj = {x:i,y: (Math.random()) ,z:j, R:r,G:0,B:0};
 					plane[i].push(obj);
 				}
 			}
@@ -140,13 +116,16 @@
 				boxVertices.push(vertex.B); // B
 				
 			}
-
+			var vertex1;
+			var vertex2;
+			var vertex3;
+			var vertex4;
 			for(var i =0;i<width-1;i++){
 				for(var j = 0 ; j<height-1;j++){
-					var vertex1 = plane[i][j];
-					var vertex2 = plane[i+1][j];
-					var vertex3 = plane[i+1][j+1];
-					var vertex4 = plane[i][j+1];
+					vertex1 = plane[i][j];
+					vertex2 = plane[i+1][j];
+					vertex3 = plane[i+1][j+1];
+					vertex4 = plane[i][j+1];
 					
 					addToArray(vertex1);
 					addToArray(vertex2);

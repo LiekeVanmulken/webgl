@@ -194,6 +194,66 @@
 			}
 			console.log(boxIndices);
 
+			function crossPoduct(aX,aY,aZ,bX,bY,bZ){
+				var x = (aY*bZ)-(aZ*bY);
+				var y = (aZ*bX)-(aX*bZ);
+				var z = (aX*bY)-(aY*bX);
+				return {x:x,y:y,z:z};
+			}
+
+			function createNormals(vertices, boxIndices){
+				
+				var values;
+
+				var vertex1;
+				var vertex2;
+				var vertex3;
+
+				var aX; 
+				var aY;
+				var aX;
+				var bX;
+				var bY;
+				var bZ;
+
+				var cross;
+				var crossLength;
+
+				for(var i = 0; i <boxIndices.length; i+=3){
+
+					// todo : maybe remove the Math.abs();
+					
+					// get verteces
+					vertex1 = vertices[boxIndices[i]];
+					vertex2 = vertices[boxIndices[i+1]];
+					vertex3 = vertices[boxIndices[i+2]];
+
+					// calculate U and V vectors for cross
+					aX = Math.abs(vertex1.x - vertex2.x);
+					aY = Math.abs(vertex1.y - vertex2.y);
+					aX = Math.abs(vertex1.z - vertex2.z);
+					bX = Math.abs(vertex1.x - vertex3.x);
+					bY = Math.abs(vertex1.y - vertex3.y);
+					bZ = Math.abs(vertex1.z - vertex3.z);
+
+					// crossProdcut
+					cross = crossPoduct(aX,aY,aZ,bX,bY,bZ);
+					
+					// pythagorean theorum in 3d
+					crossLength = Math.sqrt( Math.pow(cross.x,2) + Math.pow(cross.y,2) + Math.pow(cross.z,2) );
+
+					// normalise and put in values
+					value.push(cross.x / crossLength);
+					value.push(cross.y / crossLength);
+					value.push(cross.z / crossLength);
+					
+				}
+				return values;
+			}
+
+			var normals = createNormals(boxVertices,boxIndices);
+
+
 			var boxVertexBufferObject = gl.createBuffer();
 			gl.bindBuffer(gl.ARRAY_BUFFER,boxVertexBufferObject);
 			gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(boxVertices),gl.STATIC_DRAW);
@@ -202,12 +262,16 @@
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,BoxIndicesBufferObject);
 			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(boxIndices),gl.STATIC_DRAW);
 
+			var NormalBufferObject = gl.createBuffer();
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,NormalBufferObject);
+			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(normals),gl.STATIC_DRAW);
+
 			var positionAttribLocation = gl.getAttribLocation(program,'position');
 			gl.vertexAttribPointer(
 				positionAttribLocation, // Attribute location
 				3, // number of elements per attributer -> 2 since vec2
 				gl.FLOAT, // type of element
-				gl.FALSE, // is de data normalised ?(check later what this means)
+				gl.FALSE, // is the data normalised ?(check later what this means)
 				6 * Float32Array.BYTES_PER_ELEMENT,// size of an individual verterx
 				0 // offset
 				);
@@ -220,6 +284,19 @@
 				gl.FALSE,
 				6 * Float32Array.BYTES_PER_ELEMENT,
 				3 * Float32Array.BYTES_PER_ELEMENT 
+				);
+
+			// TODO : check if this is the propper size, (it should be).
+			// TODO : add normal to the shader
+
+			var NormalAttribLocation = gl.getAttribLocation(program,'normal');
+			gl.vertexAttribPointer(
+				NormalAttribLocation,
+				3, 
+				gl.FLOAT,
+				gl.FALSE,
+				3 * Float32Array.BYTES_PER_ELEMENT,
+				0 
 				);
 
 

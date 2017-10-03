@@ -1,0 +1,450 @@
+<html>
+<head>
+	<title>Perlin Plane</title>
+</head>
+<body onload="Main()">
+	<script src="./gl-matrix.js" type="text/javascript"></script>
+	<!-- <canvas id="c" width="1920px" height="1080px"></canvas> -->
+	<canvas id="c" width="1500px" height="800px"></canvas>
+	<!-- <p>Here the canvas ends</p> -->
+
+	<script src="./perlin_github.js" type="text/javascript"></script>
+
+	<script id="2d-vertex-shader" type="notjs">
+		attribute vec3 position;
+		attribute vec3 vertColor;
+		attribute vec3 vertNormal;
+
+		uniform mat4 mWorld;
+		uniform mat4 mView;
+		uniform mat4 mProj;
+
+
+		varying vec3 fragColor;
+
+		
+		varying highp vec3 vLighting;
+
+		void main(){
+			fragColor = vertColor;
+			gl_Position = mProj * mView * mWorld *vec4(position,1.0);
+
+			
+  			highp vec3 ambientLight = vec3(0.3, 0.3, 0.3);
+      		highp vec3 directionalLightColor = vec3(1, 1, 1);
+      		highp vec3 directionalVector = normalize(vec3(0.85, 0.8, 0.75));
+
+      		highp vec4 transformedNormal = mWorld * vec4(vertNormal, 1.0);
+
+      		highp float directional = max(dot(transformedNormal.xyz, directionalVector), 0.0);
+      		vLighting = ambientLight + (directionalLightColor * directional);
+
+		}
+	</script>
+
+	<script id="2d-fragment-shader" type="notjs">
+		precision mediump float;
+
+		varying vec3 fragColor;
+		varying highp vec3 vLighting;
+
+		void main(){
+			gl_FragColor = vec4(fragColor,1);
+			//gl_FragColor = vec4(fragColor * vLighting,1);
+		}
+	</script>
+
+	<script type="text/javascript">
+
+
+		var plane = [];
+		var noise;
+
+		function Main(){
+			var canvas = document.getElementById('c');
+			var gl = canvas.getContext('webgl');
+			if(!gl){
+				console.log('Used the experimental-webgl');
+				gl = canvas.getContext('experimental-webgl');
+			}
+			if(!gl){
+				alert('Cannot use webgl');
+			}
+
+			var vertexShaderSource = document.getElementById('2d-vertex-shader').text;
+			var fragmentShaderSource = document.getElementById('2d-fragment-shader').text;
+
+
+			gl.clearColor(0.75, 0.85, 0.8, 1.0);
+			gl.clear(gl.COLOR_BUFFER_BIT);
+
+			var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+			var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+
+			gl.shaderSource(vertexShader,vertexShaderSource);
+			gl.shaderSource(fragmentShader, fragmentShaderSource);
+
+			gl.compileShader(vertexShader);
+
+			if(!gl.getShaderParameter(vertexShader,gl.COMPILE_STATUS)){
+				console.error('Vertex shader not compiling', gl.getShaderInfoLog(vertexShader));
+			}
+
+			gl.compileShader(fragmentShader);
+			if(!gl.getShaderParameter(fragmentShader,gl.COMPILE_STATUS)){
+				console.error('Fragment shader not compiling', gl.getShaderInfoLog(fragmentShader));
+			}
+
+
+			var program = gl.createProgram();
+			gl.attachShader(program,vertexShader);
+			gl.attachShader(program,fragmentShader);
+			gl.linkProgram(program);
+			if(!gl.getProgramParameter(program,gl.LINK_STATUS)){
+				console.error('ERROR linking', gl.GetProgramInfoLog(program));
+				return;
+			}
+			// catches aditional issues -> only use in developer
+			gl.validateProgram(program);
+			if(!gl.getProgramParameter(program,gl.VALIDATE_STATUS)){
+				console.error('ERROR validating', gl.GetProgramInfoLog(program));
+				return;
+			}
+
+			//
+			// create buffer
+			//
+
+			var width = 200;
+			var height = 200;
+			// var plane = [];
+
+
+
+			// noise = generatePerlinNoise(width, height);
+			
+//			noise = generatePerlinNoise(width,height);
+			Perlin();
+			console.log('Done with generating perlin noise');
+
+			var boxVertices = [];
+			var counter = 0;
+			var value;
+			for(var i =0;i<width;i++){
+				// console.log(i);
+				plane.push([]);
+				for(var j = 0;j<height;j++){
+					// console.log(j);
+
+					var r = (i*j)/(width * height) +.1;
+
+					value = perlin(i + .001,0,j+ .001);
+
+					// var obj = {x:i/3,y: value ,z:j/3, R:r,G:0,B:0};
+					var obj = {x:i/3,y: value ,z:j/3, R:0,G:0,B:1};
+
+					plane[i].push(obj);
+				}
+			}
+			console.log('Done with generating vertices');
+
+			function addToArray(vertex){
+				boxVertices.push(vertex.x);
+				boxVertices.push(vertex.y);
+				boxVertices.push(vertex.z);
+
+				boxVertices.push(vertex.R); // R
+				boxVertices.push(vertex.G); // G
+				boxVertices.push(vertex.B); // B
+
+				// normals
+				boxVertices.push(0);
+				boxVertices.push(0);
+				boxVertices.push(0);
+				
+			}
+			var vertex1;
+			var vertex2;
+			var vertex3;
+			var vertex4;
+			for(var i =0;i<width-1;i++){
+				for(var j = 0 ; j<height-1;j++){
+					vertex1 = plane[i][j];
+					vertex2 = plane[i+1][j];
+					vertex3 = plane[i+1][j+1];
+					vertex4 = plane[i][j+1];
+					
+					addToArray(vertex1);
+					addToArray(vertex2);
+					addToArray(vertex3);
+					addToArray(vertex4);
+				}
+			}
+			console.log(boxVertices);
+
+			
+			var standardIndices = 
+			[
+				0,1,2,2,3,0,
+			];
+			boxIndices = [];
+			var count = (width-1) * (height-1);
+			for(var i =0;i<count;i++){
+				
+				for(var k=0; k <  standardIndices.length; k++){
+					boxIndices.push((i*4)+standardIndices[k]);
+				}
+			}
+			console.log(boxIndices);
+
+			function crossPoduct(aX,aY,aZ,bX,bY,bZ){
+				var x = (aY*bZ)-(aZ*bY);
+				var y = (aZ*bX)-(aX*bZ);
+				var z = (aX*bY)-(aY*bX);
+				return {x:x,y:y,z:z};
+			}
+
+			function createNormals(vertices, boxIndices){
+				
+				var values = [];
+
+				var vertex1;
+				var vertex2;
+				var vertex3;
+
+				var aX; 
+				var aY;
+				var aZ;
+				var bX;
+				var bY;
+				var bZ;
+
+				var cross;
+				var crossLength;
+				var itemsInVertex = 9;
+
+				var j;
+				for(var i = 0; i <boxIndices.length; i+=itemsInVertex){
+					j = i+6;
+					// todo : maybe remove the Math.abs();
+					
+					// get verteces
+					vertex1 = {x:vertices[boxIndices[i]], y:vertices[boxIndices[i+1]],z:vertices[boxIndices[i+2]] };
+					i +=itemsInVertex;
+					vertex2 = {x:vertices[boxIndices[i]], y:vertices[boxIndices[i+1]],z:vertices[boxIndices[i+2]] };
+					i +=itemsInVertex;
+					vertex3 = {x:vertices[boxIndices[i]], y:vertices[boxIndices[i+1]],z:vertices[boxIndices[i+2]] };
+					// i +=6;
+					// vertex2 = vertices[boxIndices[i+1]];
+					// vertex3 = vertices[boxIndices[i+2]];
+
+					// calculate U and V vectors for cross
+					aX = vertex1.x - vertex2.x;
+					aY = vertex1.y - vertex2.y;
+					aZ = vertex1.z - vertex2.z;
+					bX = vertex1.x - vertex3.x;
+					bY = vertex1.y - vertex3.y;
+					bZ = vertex1.z - vertex3.z;
+
+					// crossProdcut
+					cross = crossPoduct(aX,aY,aZ,bX,bY,bZ);
+					
+					// pythagorean theorum in 3d
+					crossLength = Math.sqrt( Math.pow(cross.x,2) + Math.pow(cross.y,2) + Math.pow(cross.z,2) );
+
+					vertices[j] = cross.x / crossLength;
+					vertices[j+1] = cross.y / crossLength;
+					vertices[j+2] = cross.z / crossLength;
+					j +=itemsInVertex;
+
+					vertices[j] = cross.x / crossLength;
+					vertices[j+1] = cross.y / crossLength;
+					vertices[j+2] = cross.z / crossLength;
+					j +=itemsInVertex;
+
+					vertices[j] = cross.x / crossLength;
+					vertices[j+1] = cross.y / crossLength;
+					vertices[j+2] = cross.z / crossLength;
+					j +=itemsInVertex;
+
+					vertices[j] = cross.x / crossLength;
+					vertices[j+1] = cross.y / crossLength;
+					vertices[j+2] = cross.z / crossLength;
+					j +=itemsInVertex;
+
+					// todo : completely change this to add it to the vertex array
+					// normalise and put in values
+					// values.push(cross.x / crossLength);
+					// values.push(cross.y / crossLength);
+					// values.push(cross.z / crossLength);
+
+					// values.push(cross.x / crossLength);
+					// values.push(cross.y / crossLength);
+					// values.push(cross.z / crossLength);
+
+					// values.push(cross.x / crossLength);
+					// values.push(cross.y / crossLength);
+					// values.push(cross.z / crossLength);
+
+					// values.push(cross.x / crossLength);
+					// values.push(cross.y / crossLength);
+					// values.push(cross.z / crossLength);
+					
+				}
+				return values;
+			}
+
+			var normals = createNormals(boxVertices,boxIndices);
+
+
+			var boxVertexBufferObject = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER,boxVertexBufferObject);
+			gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(boxVertices),gl.STATIC_DRAW);
+
+			var BoxIndicesBufferObject = gl.createBuffer();
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,BoxIndicesBufferObject);
+			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(boxIndices),gl.STATIC_DRAW);
+
+			// var NormalBufferObject = gl.createBuffer();
+			// gl.bindBuffer(gl.ARRAY_BUFFER,NormalBufferObject);
+			// gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(normals),gl.STATIC_DRAW);
+
+			var positionAttribLocation = gl.getAttribLocation(program,'position');
+			gl.vertexAttribPointer(
+				positionAttribLocation, // Attribute location
+				3, // number of elements per attributer -> 2 since vec2
+				gl.FLOAT, // type of element
+				gl.FALSE, // is the data normalised ?(check later what this means)
+				9 * Float32Array.BYTES_PER_ELEMENT,// size of an individual verterx
+				0 // offset
+				);
+			
+			var vertColorAttribLocation = gl.getAttribLocation(program,'vertColor');
+			gl.vertexAttribPointer(
+				vertColorAttribLocation,
+				3, 
+				gl.FLOAT,
+				gl.FALSE,
+				6 * Float32Array.BYTES_PER_ELEMENT,
+				3 * Float32Array.BYTES_PER_ELEMENT 
+				);
+
+			// TODO : check if this is the propper size, (it should be).
+			// TODO : add normal to the shader
+
+			var NormalAttribLocation = gl.getAttribLocation(program,'vertNormal');
+			gl.vertexAttribPointer(
+				NormalAttribLocation,
+				3, 
+				gl.FLOAT,
+				gl.FALSE,
+				3 * Float32Array.BYTES_PER_ELEMENT,
+				6 * Float32Array.BYTES_PER_ELEMENT  
+				);
+
+			//todo : make it so it uses the offset
+
+
+
+
+			gl.enableVertexAttribArray(positionAttribLocation);
+			gl.enableVertexAttribArray(vertColorAttribLocation);
+			gl.enableVertexAttribArray(NormalAttribLocation);
+
+			gl.useProgram(program);
+
+			var matWorldUniformLocation = gl.getUniformLocation(program, 'mWorld');
+			var matViewUniformLocation = gl.getUniformLocation(program, 'mView');
+			var matProjUniformLocation = gl.getUniformLocation(program, 'mProj');
+
+			var worldMatrix = new Float32Array(16);
+			var viewMatrix = new Float32Array(16);
+			var projMatrix = new Float32Array(16);
+
+			mat4.identity(worldMatrix);
+			mat4.lookAt(viewMatrix,[0,2,-4],[0,0,0],[0,1,0]);
+			mat4.perspective(
+				projMatrix, 
+				glMatrix.toRadian(45), // fov
+				 1, // aspect ratio
+				 .1, // min viewing frustum
+				 1000 // max viewing frustum
+				 );
+
+			gl.uniformMatrix4fv(matWorldUniformLocation,gl.FALSE, worldMatrix);
+			gl.uniformMatrix4fv(matViewUniformLocation,gl.FALSE, viewMatrix);
+			gl.uniformMatrix4fv(matProjUniformLocation,gl.FALSE, projMatrix);
+
+			//
+			// Main render loop
+			//
+			var translation = [0,0,0];
+			var rotTrans = [0,0,0];
+
+
+
+			var identityMatrix = new Float32Array(16);
+			mat4.identity(identityMatrix);
+			var angle = 0.1
+
+			mat4.rotate(worldMatrix,identityMatrix,angle,[0,5,0]);
+
+
+			var loop = function (){
+				
+				angle = performance.now() / 1000 / 6 * 2 * Math.PI;
+				
+				gl.uniformMatrix4fv(matWorldUniformLocation,gl.FALSE, worldMatrix);
+				// gl.uniformMatrix4fv(matViewUniformLocation,gl.FALSE, viewMatrix);
+
+				gl.clearColor(.75,.85,.8,1);
+				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+
+				// gl.drawArrays(gl.TRIANGLES,0,3);	
+				// gl.drawElements(gl.TRIANGLES, boxIndices.length, gl.UNSIGNED_SHORT,0);
+				gl.drawElements(gl.LINES, boxIndices.length, gl.UNSIGNED_SHORT,0);
+				requestAnimationFrame(loop);
+			}
+			requestAnimationFrame(loop);
+			document.body.onkeydown = function(e){
+				
+				console.log(e.keyCode);
+
+				
+				if(e.keyCode === 38){// up
+					translation[1]-=1;
+				}
+				if(e.keyCode === 40){// down
+					translation[1]+=1;
+				}
+				if(e.keyCode === 37){// left
+					translation[0]-=.1;
+				}
+				if(e.keyCode === 39){// right
+					translation[0]+=.1;
+				}
+
+				if(e.keyCode === 87){// W
+					translation[2]-=1;
+				}
+				if(e.keyCode === 83){// S
+					translation[2]+=1;
+				}
+				if(e.keyCode === 68){//
+					rotTrans[1]+=1;
+				}
+				if(e.keyCode === 65){//
+					rotTrans[1]-=1;
+				}
+
+				mat4.translate(worldMatrix,identityMatrix,translation);
+				// mat4.translate(viewMatrix,identityMatrix,rotTrans);
+			};
+
+		}
+
+	</script>
+
+</body>
+</html>

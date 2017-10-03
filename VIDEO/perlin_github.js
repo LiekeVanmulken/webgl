@@ -50,7 +50,7 @@ var Perlin = function () {
         p.push(permutation[x % 256]);
     }
 };
-
+Perlin();
 var perlin = function (x, y, z) {
     if (repeat > 0) {									// If we have any repeat on, change the coordinates to their "local" repetitions
         x = x % repeat;

@@ -50,8 +50,8 @@
 
 		void main(){
 			//gl_FragColor = vec4(fragColor,1);
-			//gl_FragColor = vec4(fragColor * vLighting,1);
-			gl_FragColor = vec4(1,0,0,1);
+			gl_FragColor = vec4(fragColor * vLighting,1);
+			//gl_FragColor = vec4(1,0,0,1);
 		}
 	</script>
 
@@ -180,7 +180,7 @@
 			
 			var standardIndices = 
 			[
-				0,1,2,2,3,0,
+				0,1,2,2,3,0
 			];
 			boxIndices = [];
 			var count = (width-1) * (height-1);
@@ -221,7 +221,6 @@
 				var j;
 				for(var i = 0; i <boxIndices.length; i+=itemsInVertex){
 					j = i+6;
-					// todo : maybe remove the Math.abs();
 					
 					// get verteces
 					vertex1 = {x:vertices[boxIndices[i]], y:vertices[boxIndices[i+1]],z:vertices[boxIndices[i+2]] };
@@ -229,9 +228,7 @@
 					vertex2 = {x:vertices[boxIndices[i]], y:vertices[boxIndices[i+1]],z:vertices[boxIndices[i+2]] };
 					i +=itemsInVertex;
 					vertex3 = {x:vertices[boxIndices[i]], y:vertices[boxIndices[i+1]],z:vertices[boxIndices[i+2]] };
-					// i +=6;
-					// vertex2 = vertices[boxIndices[i+1]];
-					// vertex3 = vertices[boxIndices[i+2]];
+
 
 					// calculate U and V vectors for cross
 					aX = vertex1.x - vertex2.x;
@@ -247,26 +244,6 @@
 					// pythagorean theorum in 3d
 					crossLength = Math.sqrt( Math.pow(cross.x,2) + Math.pow(cross.y,2) + Math.pow(cross.z,2) );
 
-//					vertices[j] = cross.x / crossLength;
-//					vertices[j+1] = cross.y / crossLength;
-//					vertices[j+2] = cross.z / crossLength;
-//					j +=itemsInVertex;
-//
-//					vertices[j] = cross.x / crossLength;
-//					vertices[j+1] = cross.y / crossLength;
-//					vertices[j+2] = cross.z / crossLength;
-//					j +=itemsInVertex;
-//
-//					vertices[j] = cross.x / crossLength;
-//					vertices[j+1] = cross.y / crossLength;
-//					vertices[j+2] = cross.z / crossLength;
-//					j +=itemsInVertex;
-//
-//					vertices[j] = cross.x / crossLength;
-//					vertices[j+1] = cross.y / crossLength;
-//					vertices[j+2] = cross.z / crossLength;
-//					j +=itemsInVertex;
-
                     vertices[j] = cross.x ;
                     vertices[j+1] = cross.y ;
                     vertices[j+2] = cross.z ;
@@ -286,25 +263,6 @@
                     vertices[j+1] = cross.y ;
                     vertices[j+2] = cross.z ;
                     j +=itemsInVertex;
-
-
-                    // todo : completely change this to add it to the vertex array
-					// normalise and put in values
-					// values.push(cross.x / crossLength);
-					// values.push(cross.y / crossLength);
-					// values.push(cross.z / crossLength);
-
-					// values.push(cross.x / crossLength);
-					// values.push(cross.y / crossLength);
-					// values.push(cross.z / crossLength);
-
-					// values.push(cross.x / crossLength);
-					// values.push(cross.y / crossLength);
-					// values.push(cross.z / crossLength);
-
-					// values.push(cross.x / crossLength);
-					// values.push(cross.y / crossLength);
-					// values.push(cross.z / crossLength);
 					
 				}
 				return values;
@@ -418,8 +376,8 @@
 
 
 				// gl.drawArrays(gl.TRIANGLES,0,3);	
-//				 gl.drawElements(gl.TRIANGLES, boxIndices.length, gl.UNSIGNED_SHORT,0);
-				gl.drawElements(gl.LINES, boxIndices.length, gl.UNSIGNED_SHORT,0);
+				 gl.drawElements(gl.TRIANGLES, boxIndices.length, gl.UNSIGNED_SHORT,0);
+//				gl.drawElements(gl.LINES, boxIndices.length, gl.UNSIGNED_SHORT,0);
 				requestAnimationFrame(loop);
 			};
 			requestAnimationFrame(loop);

@@ -158,7 +158,7 @@
     for(var i = 0;i< 10;i++) {
         value +='<br>';
         for(var j = 0;j< 10;j++) {
-            value += perlin(i , 0, j) + '&nbsp;&nbsp;';
+            value += perlin(i/100 , 0, j/100) + '&nbsp;&nbsp;';
         }
     }
     document.getElementById('div').innerHTML = value;

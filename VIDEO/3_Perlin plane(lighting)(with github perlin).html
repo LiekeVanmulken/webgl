@@ -6,7 +6,7 @@
 	<script src="./gl-matrix.js" type="text/javascript"></script>
 	<!-- <canvas id="c" width="1920px" height="1080px"></canvas> -->
 	<canvas id="c" width="1500px" height="800px"></canvas>
-	<!-- <p>Here the canvas ends</p> -->
+
 
 	<script src="./perlin_github.js" type="text/javascript"></script>
 
@@ -49,8 +49,9 @@
 		varying highp vec3 vLighting;
 
 		void main(){
-			gl_FragColor = vec4(fragColor,1);
+			//gl_FragColor = vec4(fragColor,1);
 			//gl_FragColor = vec4(fragColor * vLighting,1);
+			gl_FragColor = vec4(1,0,0,1);
 		}
 	</script>
 
@@ -138,7 +139,8 @@
 
 					var r = (i*j)/(width * height) +.1;
 
-					value = perlin(i + .001,0,j+ .001);
+//					value = perlin(i + .001,0,j+ .001);
+					value = perlin(i /4,0,j/5);
 
 					// var obj = {x:i/3,y: value ,z:j/3, R:r,G:0,B:0};
 					var obj = {x:i/3,y: value ,z:j/3, R:0,G:0,B:1};
@@ -197,7 +199,7 @@
 			}
 			console.log(boxIndices);
 
-			function crossPoduct(aX,aY,aZ,bX,bY,bZ){
+			function crossProduct(aX,aY,aZ,bX,bY,bZ){
 				var x = (aY*bZ)-(aZ*bY);
 				var y = (aZ*bX)-(aX*bZ);
 				var z = (aX*bY)-(aY*bX);
@@ -247,32 +249,53 @@
 					bZ = vertex1.z - vertex3.z;
 
 					// crossProdcut
-					cross = crossPoduct(aX,aY,aZ,bX,bY,bZ);
+					cross = crossProduct(aX,aY,aZ,bX,bY,bZ);
 					
 					// pythagorean theorum in 3d
 					crossLength = Math.sqrt( Math.pow(cross.x,2) + Math.pow(cross.y,2) + Math.pow(cross.z,2) );
 
-					vertices[j] = cross.x / crossLength;
-					vertices[j+1] = cross.y / crossLength;
-					vertices[j+2] = cross.z / crossLength;
-					j +=itemsInVertex;
+//					vertices[j] = cross.x / crossLength;
+//					vertices[j+1] = cross.y / crossLength;
+//					vertices[j+2] = cross.z / crossLength;
+//					j +=itemsInVertex;
+//
+//					vertices[j] = cross.x / crossLength;
+//					vertices[j+1] = cross.y / crossLength;
+//					vertices[j+2] = cross.z / crossLength;
+//					j +=itemsInVertex;
+//
+//					vertices[j] = cross.x / crossLength;
+//					vertices[j+1] = cross.y / crossLength;
+//					vertices[j+2] = cross.z / crossLength;
+//					j +=itemsInVertex;
+//
+//					vertices[j] = cross.x / crossLength;
+//					vertices[j+1] = cross.y / crossLength;
+//					vertices[j+2] = cross.z / crossLength;
+//					j +=itemsInVertex;
 
-					vertices[j] = cross.x / crossLength;
-					vertices[j+1] = cross.y / crossLength;
-					vertices[j+2] = cross.z / crossLength;
-					j +=itemsInVertex;
+                    vertices[j] = cross.x ;
+                    vertices[j+1] = cross.y ;
+                    vertices[j+2] = cross.z ;
+                    j +=itemsInVertex;
 
-					vertices[j] = cross.x / crossLength;
-					vertices[j+1] = cross.y / crossLength;
-					vertices[j+2] = cross.z / crossLength;
-					j +=itemsInVertex;
+                    vertices[j] = cross.x ;
+                    vertices[j+1] = cross.y ;
+                    vertices[j+2] = cross.z ;
+                    j +=itemsInVertex;
 
-					vertices[j] = cross.x / crossLength;
-					vertices[j+1] = cross.y / crossLength;
-					vertices[j+2] = cross.z / crossLength;
-					j +=itemsInVertex;
+                    vertices[j] = cross.x ;
+                    vertices[j+1] = cross.y ;
+                    vertices[j+2] = cross.z ;
+                    j +=itemsInVertex;
 
-					// todo : completely change this to add it to the vertex array
+                    vertices[j] = cross.x ;
+                    vertices[j+1] = cross.y ;
+                    vertices[j+2] = cross.z ;
+                    j +=itemsInVertex;
+
+
+                    // todo : completely change this to add it to the vertex array
 					// normalise and put in values
 					// values.push(cross.x / crossLength);
 					// values.push(cross.y / crossLength);
@@ -385,7 +408,7 @@
 
 			var identityMatrix = new Float32Array(16);
 			mat4.identity(identityMatrix);
-			var angle = 0.1
+			var angle = 0.1;
 
 			mat4.rotate(worldMatrix,identityMatrix,angle,[0,5,0]);
 
@@ -402,10 +425,10 @@
 
 
 				// gl.drawArrays(gl.TRIANGLES,0,3);	
-				// gl.drawElements(gl.TRIANGLES, boxIndices.length, gl.UNSIGNED_SHORT,0);
+//				 gl.drawElements(gl.TRIANGLES, boxIndices.length, gl.UNSIGNED_SHORT,0);
 				gl.drawElements(gl.LINES, boxIndices.length, gl.UNSIGNED_SHORT,0);
 				requestAnimationFrame(loop);
-			}
+			};
 			requestAnimationFrame(loop);
 			document.body.onkeydown = function(e){
 				

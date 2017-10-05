@@ -72,8 +72,8 @@
     var boxVertices = [];
     var boxIndices = [];
 
-    var width = 100;
-    var height = 100;
+    var width = 200;
+    var height = 200;
 
     var gl;
 
@@ -392,7 +392,7 @@
         mat4.lookAt(viewMatrix, [0, 2, -4], [0, 0, 0], [0, 1, 0]);
         mat4.perspective(
             projMatrix,
-            glMatrix.toRadian(20), // fov
+            glMatrix.toRadian(45), // fov
             1, // aspect ratio
             .1, // min viewing frustum
             1000 // max viewing frustum
@@ -415,7 +415,7 @@
 
         mat4.rotate(worldMatrix, identityMatrix, angle, [0, 5, 0]);
 
-
+        var mode = 0;
         var loop = function () {
 
             angle = performance.now() / 1000 / 6 * 2 * Math.PI;
@@ -426,10 +426,11 @@
             gl.clearColor(.75, .85, .8, 1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-
-            // gl.drawArrays(gl.TRIANGLES,0,3);
-            gl.drawElements(gl.TRIANGLES, boxIndices.length, gl.UNSIGNED_SHORT, 0);
-//				gl.drawElements(gl.LINES, boxIndices.length, gl.UNSIGNED_SHORT,0);
+            if(mode === 0) {
+                gl.drawElements(gl.TRIANGLES, boxIndices.length, gl.UNSIGNED_SHORT, 0);
+            }else {
+                gl.drawElements(gl.LINES, boxIndices.length, gl.UNSIGNED_SHORT, 0);
+            }
             requestAnimationFrame(loop);
         };
 
@@ -463,6 +464,10 @@
             }
             if (e.keyCode === 65) {//
                 rotTrans[1] -= 1;
+            }
+
+            if (e.keyCode === 49) {// 1
+                mode = mode ===0?1:0;
             }
 
             mat4.translate(worldMatrix, identityMatrix, translation);

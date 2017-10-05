@@ -61,6 +61,10 @@
 		var plane = [];
 		var noise;
 
+        var width = 200;
+        var height = 200;
+
+
 		function Main(){
 			var canvas = document.getElementById('c');
 			var gl = canvas.getContext('webgl');
@@ -116,9 +120,8 @@
 			// create buffer
 			//
 
-			var width = 200;
-			var height = 200;
-			// var plane = [];
+//			var width = 200;
+//			var height = 200;
 
 
 
@@ -135,7 +138,8 @@
 				plane.push([]);
 				for(var j = 0;j<height;j++){
 
-				    value = perlin(i /4,0,j/5);
+//				    value = perlin(i /4,0,j/5);
+					value = OctavePerlin(i/4,0,j/5,6,.1);
 					var obj = {x:i/3,y: value ,z:j/3, R:0,G:0,B:1};
 
 					plane[i].push(obj);

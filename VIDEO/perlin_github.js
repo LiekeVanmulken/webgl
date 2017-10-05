@@ -58,16 +58,6 @@ var perlin = function (x, y, z) {
         z = z % repeat;
     }
 
-    // var xi = (int)x & 255;			// todo : this might fuck up if i remove the int
-    // var yi = (int)y & 255;
-    // var zi = (int)z & 255;
-    // var xf = x-(int)x;
-    // var yf = y-(int)y;
-    // var zf = z-(int)z;
-    // var u = fade(xf);
-    // var v = fade(yf);
-    // var w = fade(zf);
-
     var xi = parseInt(x) & 255;								// Calculate the "unit cube" that the point asked will be located in
     var yi = parseInt(y) & 255; 							// The left bound is ( |_x_|,|_y_|,|_z_| ) and the right bound is that
     var zi = parseInt(z) & 255;								// plus 1.  Next we calculate the location (from 0.0 to 1.0) in that cube.

@@ -33,20 +33,19 @@
 
 		void main(){
 			fragColor = vertColor;
+
 			gl_Position = mProj * mView * mWorld *vec4(position,1.0);
 
 			
-  			highp vec3 ambientLight = vec3(0.3, 0.3, 0.3);
+  			highp vec3 ambientLight = vec3(.3, .3, .3);
       		highp vec3 directionalLightColor = vec3(1, 1, 1);
-      		//highp vec3 directionalVector = normalize(vec3(0.85, 0.8, 0.75));
-      		highp vec3 directionalVector = normalize(vec3(1, 1, 1));
+      		highp vec3 directionalVector = normalize(vec3(0.85, 0.8, 0.75));
 
       		highp vec4 transformedNormal = mWorld * vec4(vertNormal, 1.0);
 
       		highp float directional = max(dot(transformedNormal.xyz, directionalVector), 0.0);
-      		//vLighting = ambientLight + (directionalLightColor * directional);
+      		vLighting = ambientLight + (directionalLightColor * directional);
       		//vLighting = (directionalLightColor * directional);
-      		vLighting = ambientLight;
 
 		}
 
@@ -72,11 +71,21 @@
     var plane = [];
     var boxVertices = [];
     var boxIndices = [];
-    var noise;
+
+    var width = 100;
+    var height = 100;
+
+    var gl;
 
     function Main() {
+
+
+
+        //
+        //  gl initialization
+        //
         var canvas = document.getElementById('c');
-        var gl = canvas.getContext('webgl');
+        gl = canvas.getContext('webgl');
         if (!gl) {
             console.log('Used the experimental-webgl');
             gl = canvas.getContext('experimental-webgl');
@@ -85,12 +94,21 @@
             alert('Cannot use webgl');
         }
 
+        console.log('false : ' + gl.FALSE);
+        console.log('true : ' + gl.TRUE);
+
         var vertexShaderSource = document.getElementById('2d-vertex-shader').text;
         var fragmentShaderSource = document.getElementById('2d-fragment-shader').text;
 
 
         gl.clearColor(0.75, 0.85, 0.8, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
+
+
+
+        ///
+        /// Compile shaders
+        ///
 
         var vertexShader = gl.createShader(gl.VERTEX_SHADER);
         var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
@@ -109,6 +127,9 @@
             console.error('Fragment shader not compiling', gl.getShaderInfoLog(fragmentShader));
         }
 
+        ///
+        /// Create program and add shaders
+        ///
 
         var program = gl.createProgram();
         gl.attachShader(program, vertexShader);
@@ -125,21 +146,17 @@
             return;
         }
 
-        //
-        // create buffer
-        //
+        ///
+        /// Create plane data
+        ///
 
-        var width = 10;
-        var height = 10;
-        // var plane = [];
-
-
-//			var boxVertices = [];
         var value;
         for (var i = 0; i < width; i++) {
             plane.push([]);
             for (var j = 0; j < height; j++) {
-                value = perlin(i / 4, 0, j / 5);
+//                value = perlin(i / 4, 0, j / 5);
+//                value = OctavePerlin(i / 4, 0, j / 5,10,.1);
+                value = OctavePerlin(i / 9, 0, j / 9,10,.1);
                 value *= 2;
                 var obj = {x: i / 3, y: value, z: j / 3, R: 1, G: 0, B: 0};
                 plane[i].push(obj);
@@ -147,6 +164,7 @@
         }
         console.log('Done with generating vertices');
 
+        // used to change the object to numbers to add to the buffer
         function addToArray(vertex) {
             boxVertices.push(vertex.x);
             boxVertices.push(vertex.y);
@@ -162,6 +180,10 @@
             boxVertices.push(0);
 
         }
+
+        ///
+        /// Add vertices objects to array that can be passed to the videocard
+        ///
 
         var vertex1;
         var vertex2;
@@ -182,9 +204,9 @@
         }
         console.log(boxVertices);
 
-        //
-        // Making indices
-        //
+        ///
+        /// Making indices to use the vertices
+        ///
 
         var standardIndices =
             [
@@ -200,7 +222,7 @@
         }
         console.log(boxIndices);
 
-
+        // Calculate the cross product
         function crossProduct(aX, aY, aZ, bX, bY, bZ) {
             var x = (aY * bZ) - (aZ * bY);
             var y = (aZ * bX) - (aX * bZ);
@@ -208,10 +230,12 @@
             return {x: x, y: y, z: z};
         }
 
+        // Get the difference between two numbers, used to see the difference between vectors
         function difference(num1, num2) {
             return (num1 > num2) ? num1 - num2 : num2 - num1
         }
 
+        // Create the normals for thr triangles
         function createNormals(vertices, boxIndices) {
 
             var vertex1;
@@ -293,9 +317,14 @@
             return vertices;
         }
 
-        // todo : check that someting is being properly done with the normals
         boxVertices = createNormals(boxVertices, boxIndices);
 
+
+
+
+        ///
+        /// Binding data to the buffer
+        ///
 
         var boxVertexBufferObject = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, boxVertexBufferObject);
@@ -309,9 +338,9 @@
         var positionAttribLocation = gl.getAttribLocation(program, 'position');
         gl.vertexAttribPointer(
             positionAttribLocation, // Attribute location
-            3, // number of elements per attributer -> 2 since vec2
+            3, // number of elements per attributer -> 3 since vec3
             gl.FLOAT, // type of element
-            gl.FALSE, // is the data normalised ?(check later what this means)
+            gl.FALSE, // is the data normalised
             9 * Float32Array.BYTES_PER_ELEMENT,// size of an individual verterx
             0 // offset
         );
@@ -322,12 +351,9 @@
             3,
             gl.FLOAT,
             gl.FALSE,
-            6 * Float32Array.BYTES_PER_ELEMENT,
+            9 * Float32Array.BYTES_PER_ELEMENT,
             3 * Float32Array.BYTES_PER_ELEMENT
         );
-
-        // TODO : check if this is the propper size, (it should be).
-        // TODO : add normal to the shader
 
         var NormalAttribLocation = gl.getAttribLocation(program, 'vertNormal');
         gl.vertexAttribPointer(
@@ -335,16 +361,20 @@
             3,
             gl.FLOAT,
             gl.FALSE,
-            3 * Float32Array.BYTES_PER_ELEMENT,
+            9 * Float32Array.BYTES_PER_ELEMENT,
             6 * Float32Array.BYTES_PER_ELEMENT
         );
-
 
         gl.enableVertexAttribArray(positionAttribLocation);
         gl.enableVertexAttribArray(vertColorAttribLocation);
         gl.enableVertexAttribArray(NormalAttribLocation);
 
         gl.useProgram(program);
+
+
+        ///
+        /// Initialize the world vectors
+        ///
 
         var matWorldUniformLocation = gl.getUniformLocation(program, 'mWorld');
         var matViewUniformLocation = gl.getUniformLocation(program, 'mView');
@@ -354,11 +384,15 @@
         var viewMatrix = new Float32Array(16);
         var projMatrix = new Float32Array(16);
 
+        ///
+        /// Set the matrices, to be used
+        ///
+
         mat4.identity(worldMatrix);
         mat4.lookAt(viewMatrix, [0, 2, -4], [0, 0, 0], [0, 1, 0]);
         mat4.perspective(
             projMatrix,
-            glMatrix.toRadian(45), // fov
+            glMatrix.toRadian(20), // fov
             1, // aspect ratio
             .1, // min viewing frustum
             1000 // max viewing frustum
@@ -374,7 +408,7 @@
         var translation = [0, 0, 0];
         var rotTrans = [0, 0, 0];
 
-
+        // stuff
         var identityMatrix = new Float32Array(16);
         mat4.identity(identityMatrix);
         var angle = 0.1;
@@ -398,12 +432,13 @@
 //				gl.drawElements(gl.LINES, boxIndices.length, gl.UNSIGNED_SHORT,0);
             requestAnimationFrame(loop);
         };
+
         requestAnimationFrame(loop);
+
+
+        // Add the onKeyDown so the world can be moved
         document.body.onkeydown = function (e) {
-
             console.log(e.keyCode);
-
-
             if (e.keyCode === 38) {// up
                 translation[1] -= 1;
             }
